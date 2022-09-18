@@ -10,7 +10,7 @@ locals {
     vm_type = "e2-medium"
     vm_image = "debian-cloud/debian-11"
     vm_service_account = "${local.project_number}-compute@developer.gserviceaccount.com"
-    metadata_startup_script = "apt-get update -y; apt-get upgrade; apt-get install -y git vim tmux tcpdump nmap nginx docker docker.io containerd runc; systemctl enable nginx; systemctl restart nginx; touch /etc/nginx/sites-available/reverse-proxy.conf;ln -s /etc/nginx/sites-available/reverse-proxy.conf /etc/nginx/sites-enabled/reverse-proxy.conf; docker run -itd  always --net host -e VERSION_DEP=MAIN -p 8080:8080 poxstone/flask_any_response; echo FINALIZADO"
+    metadata_startup_script = "apt-get update -y; apt-get upgrade; apt-get install -y git vim tmux tcpdump nmap nginx docker docker.io containerd runc; systemctl enable nginx; systemctl restart nginx; touch /etc/nginx/sites-available/reverse-proxy.conf;ln -s /etc/nginx/sites-available/reverse-proxy.conf /etc/nginx/sites-enabled/reverse-proxy.conf; docker run -itd --restart=always --pull always --net host -e VERSION_DEP=MAIN -p 8080:8080 poxstone/flask_any_response; echo FINALIZADO"
 }
 
 module "vpcs" {
@@ -108,12 +108,16 @@ resource "google_compute_instance_group" "vm_group_1" {
     name = "http-8080"
     port = "8080"
   }
+  named_port {
+    name = "http-443"
+    port = "443"
+  }
   depends_on = [google_compute_instance.vms[0]]
 }
 
 #health checks
 resource "google_compute_region_health_check" "hc_tcp_ports" {
-  for_each           = toset(["80","8080","5000"])
+  for_each           = toset(["80","8080","443","5000"])
   project            = local.project_id
   region             = local.region
   name               = "hc-tcp-region-${each.value}"
