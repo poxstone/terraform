@@ -94,6 +94,7 @@ resource "google_compute_instance" "vms" {
 # instance group
 resource "google_compute_instance_group" "vm_group_1" {
   name        = "group-${google_compute_instance.vms[0].name}"
+  project      = local.project_id
   zone        = local.zone
   network     = module.vpcs[0].network_id
   instances = [
@@ -113,6 +114,7 @@ resource "google_compute_instance_group" "vm_group_1" {
 #health checks
 resource "google_compute_region_health_check" "hc_tcp_ports" {
   for_each           = toset(["80","8080","5000"])
+  project            = local.project_id
   region             = local.region
   name               = "hc-tcp-region-${each.value}"
   timeout_sec        = 3
@@ -123,7 +125,7 @@ resource "google_compute_region_health_check" "hc_tcp_ports" {
 }
 
 # peering can debloqued comunications
-/*
+
 module "peering" {
   source                    = "terraform-google-modules/network/google//modules/network-peering"
   prefix                    = "np"
@@ -131,4 +133,4 @@ module "peering" {
   peer_network              = module.vpcs[2].network_self_link
   export_peer_custom_routes = true
   depends_on = [module.vpcs]
-}*/
+}
