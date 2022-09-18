@@ -23,13 +23,13 @@ module "vpcs" {
   routing_mode = "REGIONAL"
   subnets = [{
       subnet_name     = "${local.vpc_prefix}-${each.value}-${local.region}"
-      subnet_ip       = "10.${each.value}.0.0/28"
+      subnet_ip       = "10.${each.value}.0.0/27"
       subnet_region   = local.region
   }]
   secondary_ranges = {
     subnet-01 = [{
         range_name    = "${local.vpc_prefix}-${each.value}-${local.region}-subnet-${each.value}"
-        ip_cidr_range = "10.${each.value}.1.0/28"
+        ip_cidr_range = "10.${each.value}.1.0/27"
     }]
   }
   routes = [{
@@ -52,6 +52,9 @@ module "vpcs" {
     }
   }]
 }
+output "vpcs" {
+    value = module.vpcs[0].subnets_names[0]
+}
 
 # compute instances
 resource "google_compute_instance" "vms" {
@@ -67,12 +70,14 @@ resource "google_compute_instance" "vms" {
     initialize_params { image = local.vm_image }
   }
   network_interface {
-    subnetwork = module.vpcs[each.value].subnets_names[0]
+    #subnetwork = module.vpcs[sum([each.value,0])].subnets_names[0]
+    subnetwork = "https://www.googleapis.com/compute/v1/projects/${local.project_id}/regions/${local.region}/subnetworks/${local.vpc_prefix}-${sum([each.value,0])}-${local.region}"
     network_ip = "10.${each.value}.0.2"
     access_config {}
   }
   network_interface {
-    subnetwork = module.vpcs[sum([each.value,1])].subnets_names[0]
+    #subnetwork = module.vpcs[sum([each.value,1])].subnets_names[0]
+    subnetwork = "https://www.googleapis.com/compute/v1/projects/${local.project_id}/regions/${local.region}/subnetworks/${local.vpc_prefix}-${sum([each.value,1])}-${local.region}"
     network_ip = "10.${sum([each.value,1])}.0.3"
     access_config {}
   }
@@ -107,9 +112,9 @@ resource "google_compute_instance_group" "vm_group_1" {
 
 #health checks
 resource "google_compute_region_health_check" "hc_tcp_ports" {
-  for_each = toset(["80","8080","5000"])
-  region        = local.region
-  name     = "hc-tcp-region-${each.value}"
+  for_each           = toset(["80","8080","5000"])
+  region             = local.region
+  name               = "hc-tcp-region-${each.value}"
   timeout_sec        = 3
   check_interval_sec = 5
   tcp_health_check {
