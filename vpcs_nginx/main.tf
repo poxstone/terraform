@@ -10,7 +10,7 @@ locals {
     vm_type = "e2-medium"
     vm_image = "debian-cloud/debian-11"
     vm_service_account = "${local.project_number}-compute@developer.gserviceaccount.com"
-    metadata_startup_script = "apt-get update -y; apt-get upgrade; apt-get install -y git vim tmux htop tcpdump nmap nginx docker docker.io containerd runc; systemctl enable nginx; systemctl restart nginx; touch /etc/nginx/sites-available/reverse-proxy.conf;ln -s /etc/nginx/sites-available/reverse-proxy.conf /etc/nginx/sites-enabled/reverse-proxy.conf; docker stop $(docker ps -qa); docker rmi -f $(docker images -q); docker run -itd --restart=always --pull always --net host -e VERSION_DEP=MAIN -e WORKERS=2 -p 8080:8080 -p 5005:5005 poxstone/flask_any_response; echo FINALIZADO"
+    metadata_startup_script = "apt-get update -y; apt-get upgrade; apt-get install -y git vim tmux htop tcpdump nmap nginx docker docker.io containerd runc; systemctl enable nginx; systemctl restart nginx; touch /etc/nginx/sites-available/reverse-proxy.conf;ln -s /etc/nginx/sites-available/reverse-proxy.conf /etc/nginx/sites-enabled/reverse-proxy.conf; docker stop $(docker ps -qa); docker rmi -f $(docker images -q); docker run -itd --restart=always --pull always --net host -e VERSION_DEP=MAIN -e WORKERS=4 -p 8080:8080 -p 5005:5005 poxstone/flask_any_response; echo FINALIZADO"
 }
 
 module "vpcs" {
